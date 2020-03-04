@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <random>
 #include <ctime>
+#include <string>
 
 using namespace std;
 
@@ -14,6 +15,7 @@ map<float,float> DATA;
 class Bank{
   float interbank_assets;
   float liabilities;
+  float interbank_assets_fixed;
 
 public:
   Bank(){
@@ -21,6 +23,7 @@ public:
     liabilities = 0.96;
     defaulted = false;
     bank_lent = 0;
+    interbank_assets_fixed = interbank_assets;
   }
   vector<Bank> bank_connected;
   int bank_id;
@@ -46,16 +49,17 @@ void Bank::update_total_assets(float loss){
   }
 }
 
-void Bank::update_connection(Bank& bank){
+void Bank::update_connection(Bank &bank){
   bank.bank_lent += 1;
   bank_connected.push_back(bank);
 }
 
 void Bank::default_bank(){
   defaulted = true;
+  //cout << bank_id << " " << bank_connected.size() << endl;
   for(Bank& bank : bank_connected){
     if(!bank.defaulted){
-      float loss = (float) interbank_assets / bank.bank_lent;
+      float loss = (float) interbank_assets_fixed / bank.bank_lent;
       bank.update_total_assets(loss);
     }
   }
@@ -92,12 +96,12 @@ void Graph::generate_bank(){
     bank_list.push_back(newBank);
   }
 
-
   for(int borrow=0; borrow<bank_list.size(); borrow++){
     for(int lend=0; lend<bank_list.size(); lend++){
       float tendency = ((float) rand() / (RAND_MAX));
       if(borrow!=lend && tendency < borrow_probability){
         bank_list[borrow].update_connection(bank_list[lend]);
+        cout << bank_list[borrow].bank_connected.size() << endl;
         connection += 1;
       }
     }
@@ -122,6 +126,7 @@ void Graph::draw_graph(){
 }
 
 void Graph::random_default_bank(){
+  srand(time(NULL));
   float random_zero_to_one = ((float) rand() / (RAND_MAX));
   int random_index = random_zero_to_one * bank_list.size();
   Bank random_bank = bank_list[random_index];
@@ -141,10 +146,11 @@ void Graph::store_data(){
 }
 
 int main(){
+  srand(time(NULL));
   clock_t begin_time = clock();
   for (float i=0; i<10; i+=0.5){
     Graph graph = Graph();
-    graph.set_values(100,i,100);
+    graph.set_values(100,i,150);
     graph.draw_graph();
   }
 
